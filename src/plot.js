@@ -314,16 +314,10 @@ export class PlotCanvas {
   }
 
   size() {
-    const panel = this.root.closest('.plot-panel');
-    const title = panel?.querySelector('.panel-title');
     const rect = this.root.getBoundingClientRect();
-    const panelRect = panel?.getBoundingClientRect();
-    const titleRect = title?.getBoundingClientRect();
-    const rawHeight = (panelRect?.height ?? rect.height) - (titleRect?.height ?? 0);
-    const viewportHeight = Math.max(260, window.innerHeight - rect.top - 120);
     return {
       width: Math.max(1, Math.floor(rect.width)),
-      height: Math.max(1, Math.floor(Math.min(rawHeight, viewportHeight))),
+      height: Math.max(1, Math.floor(rect.height)),
     };
   }
 
