@@ -1,6 +1,7 @@
 # Logs
 logs
 *.log
+!src/assets/driving-candump-2025-09-30_151555.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

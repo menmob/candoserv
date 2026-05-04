@@ -17,6 +17,7 @@ export class PlotCanvas {
     this.xRange = null;
     this.lastKey = '';
     this.lastData = null;
+    this.valueBounds = new Map();
     this.uplot = null;
 
     this.canvas.style.display = 'none';
@@ -28,6 +29,7 @@ export class PlotCanvas {
 
   setSignals(ids) {
     this.selected = new Set(ids);
+    this.valueBounds.clear();
     this.resetChart();
     this.requestDraw();
   }
@@ -35,12 +37,14 @@ export class PlotCanvas {
   toggleSignal(id, enabled) {
     if (enabled) this.selected.add(id);
     else this.selected.delete(id);
+    this.valueBounds.clear();
     this.resetChart();
     this.requestDraw();
   }
 
   clear() {
     this.selected.clear();
+    this.valueBounds.clear();
     this.resetChart();
     this.requestDraw();
   }
@@ -59,6 +63,7 @@ export class PlotCanvas {
     const next = Math.max(MIN_WINDOW_SECONDS, Math.min(MAX_WINDOW_SECONDS, seconds));
     if (next === this.windowSeconds) return this.windowSeconds;
     this.windowSeconds = next;
+    this.valueBounds.clear();
     if (Number.isFinite(this.playheadTime)) this.setHistoryRange(this.playheadTime);
     else this.requestDraw();
     return this.windowSeconds;
@@ -74,6 +79,7 @@ export class PlotCanvas {
 
   fitToData() {
     this.xRange = null;
+    this.valueBounds.clear();
     this.requestDraw();
   }
 
@@ -130,6 +136,7 @@ export class PlotCanvas {
     this.ensureChart(ids, width, height);
     this.uplot.setData(data, false);
     this.uplot.setScale('x', { min: range.minT, max: range.maxT });
+    this.applyValueScales(ids, data);
     this.readout.textContent = `${formatClock(range.maxT - range.minT)} history`;
   }
 
@@ -160,7 +167,7 @@ export class PlotCanvas {
       {},
       ...ids.map((id) => {
         const signal = SIGNAL_BY_ID[id];
-        scales[id] = { auto: true };
+        scales[id] = { auto: false };
         return {
           label: signal?.label || id,
           scale: id,
@@ -221,19 +228,22 @@ export class PlotCanvas {
   }
 
   buildData(ids, range, width) {
+    const visible = this.collectVisible(ids, range);
+    const rawPointCount = visible.reduce((sum, series) => sum + series.length, 0);
+    if (rawPointCount <= Math.max(8000, width * 8)) return buildRawAligned(visible);
+
     const bucketCount = Math.max(16, Math.floor(width - 56));
     const span = range.maxT - range.minT;
     const x = [];
     const ys = ids.map(() => []);
     const buckets = ids.map(() => Array.from({ length: bucketCount }, () => ({ sum: 0, count: 0 })));
 
-    ids.forEach((id, seriesIndex) => {
-      this.store.forEach(id, (t, v) => {
-        if (!Number.isFinite(t) || !Number.isFinite(v) || t < range.minT || t > range.maxT) return;
+    visible.forEach((series, seriesIndex) => {
+      for (const [t, v] of series) {
         const index = Math.max(0, Math.min(bucketCount - 1, Math.floor(((t - range.minT) / span) * bucketCount)));
         buckets[seriesIndex][index].sum += v;
         buckets[seriesIndex][index].count += 1;
-      });
+      }
     });
 
     for (let i = 0; i < bucketCount; i++) {
@@ -245,6 +255,44 @@ export class PlotCanvas {
     }
 
     return [x, ...ys];
+  }
+
+  collectVisible(ids, range) {
+    return ids.map((id) => {
+      const samples = [];
+      this.store.forEach(id, (t, v) => {
+        if (!Number.isFinite(t) || !Number.isFinite(v) || t < range.minT || t > range.maxT) return;
+        samples.push([t, v]);
+      });
+      return samples;
+    });
+  }
+
+  applyValueScales(ids, data) {
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const values = data[i + 1];
+      let min = Infinity;
+      let max = -Infinity;
+      for (const value of values) {
+        if (!Number.isFinite(value)) continue;
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+      }
+      if (!Number.isFinite(min)) continue;
+      if (min === max) {
+        min -= 1;
+        max += 1;
+      }
+      const pad = (max - min) * 0.08;
+      const next = { min: min - pad, max: max + pad };
+      const previous = this.valueBounds.get(id);
+      const stable = previous
+        ? { min: Math.min(previous.min, next.min), max: Math.max(previous.max, next.max) }
+        : next;
+      this.valueBounds.set(id, stable);
+      this.uplot.setScale(id, stable);
+    }
   }
 
   size() {
@@ -260,4 +308,26 @@ export class PlotCanvas {
       height: Math.max(1, Math.floor(Math.min(rawHeight, viewportHeight))),
     };
   }
+}
+
+function buildRawAligned(visible) {
+  const rows = new Map();
+  for (let seriesIndex = 0; seriesIndex < visible.length; seriesIndex++) {
+    for (const [t, v] of visible[seriesIndex]) {
+      let row = rows.get(t);
+      if (!row) {
+        row = new Array(visible.length).fill(null);
+        rows.set(t, row);
+      }
+      row[seriesIndex] = v;
+    }
+  }
+
+  const times = [...rows.keys()].sort((a, b) => a - b);
+  const ys = visible.map(() => new Array(times.length).fill(null));
+  for (let i = 0; i < times.length; i++) {
+    const row = rows.get(times[i]);
+    for (let s = 0; s < visible.length; s++) ys[s][i] = row[s];
+  }
+  return [times, ...ys];
 }
