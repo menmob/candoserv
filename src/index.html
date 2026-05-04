@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telometer Replay</title>
+    <link rel="stylesheet" href="./vendor/uplot/uPlot.min.css" />
+    <link rel="stylesheet" href="./src/styles.css?v=20260504-uplot" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="titlebar">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div>
+            <h1>Telometer Replay</h1>
+            <p>Local browser dashboard for streamed candump logs</p>
+          </div>
+        </div>
+        <div class="connection-strip">
+          <span id="corsStatus" class="status-pill status-muted">not connected</span>
+          <span id="cacheStatus" class="status-pill status-muted">cache idle</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="dock dock-left" aria-label="Logs">
+          <section class="panel panel-fill">
+            <div class="panel-title">
+              <h2>Logs</h2>
+              <button id="refreshCatalog" class="icon-button" title="Refresh catalog">R</button>
+            </div>
+            <label class="field-label" for="catalogUrl">Catalog URL</label>
+            <input id="catalogUrl" class="input" spellcheck="false" />
+            <div class="field-row">
+              <input id="logFilter" class="input" placeholder="filter logs" spellcheck="false" />
+              <button id="loadCatalog" class="button">Load</button>
+            </div>
+            <div id="catalogError" class="notice hidden"></div>
+            <div id="logList" class="log-list"></div>
+          </section>
+        </aside>
+
+        <section class="center-stack">
+          <section class="panel plot-panel">
+            <div class="panel-title compact">
+              <div>
+                <h2 id="activeLogName">No log selected</h2>
+                <p id="activeLogMeta" class="subtle">Choose a log or use the embedded sample.</p>
+              </div>
+              <div class="plot-actions">
+                <button id="zoomOut" class="icon-button" title="Show more time">-</button>
+                <span id="windowReadout" class="window-readout">10s</span>
+                <button id="zoomIn" class="icon-button" title="Show less time">+</button>
+                <button id="clearSignals" class="button button-quiet">Clear</button>
+                <button id="fitView" class="button button-quiet">Fit</button>
+              </div>
+            </div>
+            <div class="plot-wrap">
+              <canvas id="plotCanvas"></canvas>
+              <div id="cursorReadout" class="cursor-readout">cursor idle</div>
+            </div>
+          </section>
+
+          <section class="transport panel">
+            <div class="transport-main">
+              <button id="playPause" class="transport-button">Play</button>
+              <button id="stepFrame" class="button">Step</button>
+              <label class="select-label">
+                Speed
+                <select id="speedSelect" class="select">
+                  <option value="0.25">0.25x</option>
+                  <option value="0.5">0.5x</option>
+                  <option value="1" selected>1x</option>
+                  <option value="2">2x</option>
+                  <option value="5">5x</option>
+                  <option value="10">10x</option>
+                  <option value="50">50x</option>
+                </select>
+              </label>
+            </div>
+            <input id="timeScrub" class="scrub" type="range" min="0" max="100000" value="0" />
+            <div class="transport-readouts">
+              <span id="timeReadout">--</span>
+              <span id="frameReadout">0 frames</span>
+              <span id="fetchReadout">0 bytes</span>
+            </div>
+          </section>
+        </section>
+
+        <aside class="dock dock-right" aria-label="Signals">
+          <section class="panel panel-fill">
+            <div class="panel-title">
+              <h2>Signals</h2>
+              <button id="selectCore" class="button button-quiet">Core</button>
+            </div>
+            <input id="signalFilter" class="input" placeholder="filter signals" spellcheck="false" />
+            <div id="signalList" class="signal-list"></div>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="statusbar">
+        <span id="statusText">Ready.</span>
+        <span>HEAD for metadata, Range GET for bytes, decode stays local.</span>
+      </footer>
+    </div>
+
+    <script type="module" src="./src/app.js?v=20260504-uplot"></script>
+  </body>
+</html>
