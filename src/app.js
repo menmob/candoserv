@@ -1,11 +1,11 @@
-import { DEFAULT_CATALOG_URL, DRIVING_LOG, INITIAL_SIGNALS, SAMPLE_LOG, SAMPLE_LOG_NAME } from './config.js?v=20260504-uplot';
+import { DEFAULT_CATALOG_URL, DRIVING_LOG, INITIAL_SIGNALS, SAMPLE_LOG, SAMPLE_LOG_NAME } from './config.js?v=20260504-history-dbc4';
 import { $, el, formatBytes, formatClock, setNotice } from './dom.js';
 import { loadCatalog, logSubtitle } from './catalog.js';
-import { RangeFile } from './range-file.js';
-import { ReplayEngine } from './replay.js';
-import { SeriesStore } from './series-store.js';
-import { PlotCanvas } from './plot.js?v=20260504-uplot';
-import { SIGNALS } from './signals.js';
+import { RangeFile } from './range-file.js?v=20260504-history-dbc4';
+import { ReplayEngine } from './replay.js?v=20260504-history-dbc4';
+import { SeriesStore } from './series-store.js?v=20260504-history-perf';
+import { PlotCanvas } from './plot.js?v=20260504-history-dbc4';
+import { SIGNALS } from './signals.js?v=20260504-history-dbc4';
 
 const nodes = {
   catalogUrl: $('#catalogUrl'),
@@ -39,9 +39,11 @@ const nodes = {
 const store = new SeriesStore();
 const replay = new ReplayEngine(store);
 const plot = new PlotCanvas($('#plotCanvas'), $('#cursorReadout'), store);
+const PLOT_FRAME_MS = 30;
 let catalog = [];
 let statusSerial = 0;
 let lastReadoutUpdate = 0;
+let lastPlotDraw = 0;
 
 function init() {
   nodes.catalogUrl.value = DEFAULT_CATALOG_URL;
@@ -78,7 +80,10 @@ function wireEvents() {
   });
   nodes.stepFrame.addEventListener('click', () => replay.step());
   nodes.speedSelect.addEventListener('change', () => replay.setSpeed(Number(nodes.speedSelect.value)));
-  nodes.timeScrub.addEventListener('input', () => replay.seek(Number(nodes.timeScrub.value) / 100000));
+  nodes.timeScrub.addEventListener('input', () => {
+    replay.seek(Number(nodes.timeScrub.value) / 100000);
+    plot.setPlayhead(replay.currentTime(), true);
+  });
   replay.addEventListener('loading', (event) => onLoading(event.detail));
   replay.addEventListener('loaded', (event) => onLoaded(event.detail));
   replay.addEventListener('buffer', (event) => onBuffer(event.detail));
@@ -246,7 +251,11 @@ function onProgress(progress) {
 }
 
 function animate() {
-  if (plot.dirty) plot.draw();
+  const now = performance.now();
+  if (plot.dirty && (!replay.playing || now - lastPlotDraw >= PLOT_FRAME_MS)) {
+    plot.draw();
+    lastPlotDraw = now;
+  }
   requestAnimationFrame(animate);
 }
 
@@ -255,6 +264,7 @@ function setStatus(message) {
 }
 
 function setPlotWindow(seconds) {
+  replay.setHistorySeconds(Math.max(seconds, 20));
   nodes.windowReadout.textContent = `${formatWindowSeconds(seconds)}`;
 }
 

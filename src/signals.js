@@ -1,6 +1,7 @@
 import { readI32LE, readU16LE, readU32LE } from './candump.js';
+import { DBC_SIGNALS, decodeDbcFrame } from './dbc.js';
 
-export const SIGNALS = [
+const CORE_SIGNALS = [
   { id: 'can.rate', label: 'CAN message rate', group: 'bus', unit: 'msg/s', color: '#f8ff7a' },
   { id: 'pedal.throttle', label: 'Throttle raw', group: 'pedal', unit: 'raw', color: '#75f0ff' },
   { id: 'pedal.brake0', label: 'Brake 0 raw', group: 'pedal', unit: 'raw', color: '#ff9a76' },
@@ -17,7 +18,9 @@ export const SIGNALS = [
   { id: 'raw.can_id', label: 'CAN ID', group: 'debug', unit: 'id', color: '#d7dce8' },
 ];
 
+export const SIGNALS = [...CORE_SIGNALS, ...DBC_SIGNALS];
 export const SIGNAL_BY_ID = Object.fromEntries(SIGNALS.map((signal) => [signal.id, signal]));
+export const SIGNAL_ORDER = new Map(SIGNALS.map((signal, index) => [signal.id, index]));
 
 export function decodeFrame(frame, state) {
   const samples = [];
@@ -49,6 +52,8 @@ export function decodeFrame(frame, state) {
   } else if (id === 0x19107171 || id === 0x19117171 || id === 0x19127171) {
     samples.push(['inverter.dc.raw', t, readI32LE(data, 0)]);
   }
+
+  samples.push(...decodeDbcFrame(frame));
 
   return samples.filter(([, , value]) => Number.isFinite(value));
 }

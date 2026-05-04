@@ -72,3 +72,4 @@ export const INITIAL_SIGNALS = [
 ];
 
 export const CHUNK_SIZE = 256 * 1024;
+export const PRELOAD_BYTES = 50 * 1024 * 1024;

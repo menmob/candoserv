@@ -1,0 +1,580 @@
+VERSION ""
+
+/* 
+ * EV26 GLV + Inverter Buses DBC
+ * 
+ * This file defines CAN messages for the GLV (Grounded Low Voltage) bus and
+ * the Inverter bus. These are the primary vehicle communication buses for
+ * control, telemetry, and monitoring.
+ * 
+ * Note: The AMS (Accumulator Management System) uses a separate physical CAN bus
+ * with its own DBC file (ev26_ams.dbc). Some messages like AMSHeartBeat appear
+ * on both buses for different purposes.
+ * 
+ * ID Collision Note: RuntimePanic (0x204) and Balance (0x204 on AMS bus) share
+ * the same CAN ID but exist on different physical buses, so there is no actual conflict.
+ */
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_SGTYPE_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: FlightController AMSBoard PedalBoard RTDBoard InverterBoard BuzzerBoard FrontHoop WheelSpeed SegmentBoard RaspberryPi Dashboard
+
+BO_ 0 CarHeartbeat: 8 FlightController
+ SG_ tick : 0|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+ SG_ status : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ rtd_status : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ errno : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ caught : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 2 GLV_AMSHeartbeat: 5 AMSBoard
+ SG_ status : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ faults : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ connected_segments : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ good_segments : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ tick : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 3 GLV_BattHeartbeat: 5 FlightController
+ SG_ status : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ ms_since_boot : 8|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+
+BO_ 8 DemandReboot: 4 Dashboard
+ SG_ key : 0|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+
+BO_ 10 DemandInverterReboot: 4 Dashboard
+ SG_ key : 0|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+
+BO_ 11 ClearInverterFaults: 1 Dashboard
+ SG_ key : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 12 RespectInverterLimits: 1 Dashboard
+ SG_ key : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 514 SetInverterParams: 8 Dashboard
+ SG_ max_traction_torque : 0|16@1+ (1,0) [0|65535] "Nm" Vector__XXX
+ SG_ max_regen_torque : 16|16@1+ (1,0) [0|65535] "Nm" Vector__XXX
+ SG_ max_battery_discharge_current : 32|16@1+ (1,0) [0|65535] "A" Vector__XXX
+ SG_ max_battery_charge_current : 48|16@1+ (1,0) [0|65535] "A" Vector__XXX
+
+BO_ 515 BalancePlease: 3 Dashboard
+ SG_ should_balance : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ threshold_voltage : 8|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+
+BO_ 516 RuntimePanic: 8 Vector__XXX
+ SG_ device_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_0 : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_1 : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_2 : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_3 : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_4 : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_5 : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_6 : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 517 RuntimeWarning: 8 Vector__XXX
+ SG_ device_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_0 : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_1 : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_2 : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_3 : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_4 : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_5 : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_6 : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 518 InitPanic: 8 Vector__XXX
+ SG_ device_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_0 : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_1 : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_2 : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_3 : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_4 : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_5 : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ msg_6 : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 519 SetRegenParams: 3 FlightController
+ SG_ enable_regen : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ regen_torque : 8|16@1+ (1,0) [0|65535] "Nm" Vector__XXX
+
+BO_ 520 RegenHeartbeat: 1 RTDBoard
+ SG_ active : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 522 AMSBlankingStart: 1 AMSBoard
+ SG_ reason : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 523 AMSBlankingEnd: 4 AMSBoard
+ SG_ ms : 0|32@1+ (1,0) [0|4294967295] "ms" Vector__XXX
+
+BO_ 524 WheelSpeedFL: 7 Vector__XXX
+ SG_ speed : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ milli_rotations : 16|32@1- (1,0) [-2147483648|2147483647] "" Vector__XXX
+ SG_ status : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 525 WheelSpeedFR: 7 Vector__XXX
+ SG_ speed : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ milli_rotations : 16|32@1- (1,0) [-2147483648|2147483647] "" Vector__XXX
+ SG_ status : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 526 WheelSpeedBL: 7 Vector__XXX
+ SG_ speed : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ milli_rotations : 16|32@1- (1,0) [-2147483648|2147483647] "" Vector__XXX
+ SG_ status : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 527 WheelSpeedBR: 7 Vector__XXX
+ SG_ speed : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ milli_rotations : 16|32@1- (1,0) [-2147483648|2147483647] "" Vector__XXX
+ SG_ status : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 768 Throttle: 5 PedalBoard
+ SG_ throttle : 0|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+ SG_ flags : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 769 Brake: 8 PedalBoard
+ SG_ brake0 : 0|32@1- (1,0) [-2147483648|2147483647] "" Vector__XXX
+ SG_ brake1 : 32|32@1- (1,0) [-2147483648|2147483647] "" Vector__XXX
+
+BO_ 770 Pump: 1 FlightController
+ SG_ pump : 0|8@1+ (1,0) [0|255] "%" Vector__XXX
+
+BO_ 1025 CarVoltageDistribution: 8 AMSBoard
+ SG_ min_voltage : 0|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ max_voltage : 16|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ avg_voltage : 32|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ current : 48|16@1+ (0.01,0) [0|655.35] "A" Vector__XXX
+
+BO_ 1026 AMSTempsInfo: 8 AMSBoard
+ SG_ min : 0|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ max : 16|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ avg : 32|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ num_good : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
+
+BO_ 1027 GLVSegmentHeartbeat: 4 AMSBoard
+ SG_ voltage_mv : 0|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ segment_id : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ die_temp : 24|8@1+ (1,0) [0|255] "degC" Vector__XXX
+
+BO_ 1029 IOBoardTime: 5 Vector__XXX
+ SG_ device_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ ms_since_boot : 8|32@1+ (1,0) [0|4294967295] "ms" Vector__XXX
+
+BO_ 1028 AMSVoltage: 8 AMSBoard
+ SG_ vbus_voltage : 0|32@1- (1,0) [-2147483648|2147483647] "mV" Vector__XXX
+ SG_ ts_voltage : 32|32@1- (1,0) [-2147483648|2147483647] "mV" Vector__XXX
+
+BO_ 1030 RTDReq: 1 RTDBoard
+ SG_ enter : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1031 GLVBattMeasurementAverage: 8 Vector__XXX
+ SG_ batt_voltage : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ batt_current : 16|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ v24_voltage : 32|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ v24_current : 48|16@1- (1,0) [-32768|32767] "" Vector__XXX
+
+BO_ 1032 GLVBattMeasurementMinimum: 8 Vector__XXX
+ SG_ batt_voltage : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ batt_current : 16|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ v24_voltage : 32|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ v24_current : 48|16@1- (1,0) [-32768|32767] "" Vector__XXX
+
+BO_ 1033 GLVBattMeasurementMaximum: 8 Vector__XXX
+ SG_ batt_voltage : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ batt_current : 16|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ v24_voltage : 32|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ v24_current : 48|16@1- (1,0) [-32768|32767] "" Vector__XXX
+
+BO_ 1280 FlightControllerStatus: 2 FlightController
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1281 AmsBoardStatus: 2 AMSBoard
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1282 PedalBoardStatus: 2 PedalBoard
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1283 RTDBoardStatus: 2 RTDBoard
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1284 InverterBoardStatus: 2 InverterBoard
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1285 BuzzerBoardStatus: 2 BuzzerBoard
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1286 FrontHoopStatus: 2 FrontHoop
+ SG_ generalError : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ boardSpecificError : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1547 GPS_VELOCITY: 8 RaspberryPi
+ SG_ speed_mmps : 0|32@1+ (1,0) [0|4294967295] "mm/s" Vector__XXX
+ SG_ heading_deg_e5 : 32|32@1- (1e-05,0) [-21474.83648|21474.83647] "deg" Vector__XXX
+
+BO_ 1792 RequestVoltages: 1 AMSBoard
+ SG_ segment_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1794 RequestTemps: 1 AMSBoard
+ SG_ segment_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1795 TempsResponse: 8 SegmentBoard
+ SG_ segment_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ index : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ temps_0 : 16|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ temps_1 : 32|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ temps_2 : 48|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+
+BO_ 1796 VoltageResponse: 8 SegmentBoard
+ SG_ segment_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ index : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ voltages_0 : 16|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+ SG_ voltages_1 : 32|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+ SG_ voltages_2 : 48|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+
+BO_ 1797 SetUVLO: 2 Dashboard
+ SG_ uvlo_mv : 0|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+
+BO_ 1798 SensorFault: 6 Vector__XXX
+ SG_ can_id : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ flags : 16|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+
+BO_ 1799 PedalInfo: 8 PedalBoard
+ SG_ pct_one : 0|16@1- (1,0) [-32768|32767] "%" Vector__XXX
+ SG_ pct_two : 16|16@1- (1,0) [-32768|32767] "%" Vector__XXX
+ SG_ limit_sw : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ faults : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ output : 48|16@1+ (1,0) [0|65535] "%" Vector__XXX
+
+BO_ 1800 PedalCountsInfo: 8 PedalBoard
+ SG_ counts_one : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ counts_two : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ zero_one : 32|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ zero_two : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
+
+BO_ 1801 BrakeCountsInfo: 8 PedalBoard
+ SG_ counts_one : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ counts_two : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ zero_one : 32|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ zero_two : 48|16@1+ (1,0) [0|65535] "" Vector__XXX
+
+BO_ 1802 SetAMSTempLimit: 2 Dashboard
+ SG_ temp_limit : 0|16@1+ (1,0) [0|65535] "degC" Vector__XXX
+
+BO_ 1803 SetCoolingTarget: 4 Dashboard
+ SG_ temp : 0|32@1- (1,0) [-2147483648|2147483647] "degC" Vector__XXX
+
+BO_ 1804 SusTravelCountsInfo: 5 FrontHoop
+ SG_ sus_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ counts : 8|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ zero : 24|16@1+ (1,0) [0|65535] "" Vector__XXX
+
+BO_ 1805 WheelSpeedMeasurement: 5 WheelSpeed
+ SG_ wheel_id : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ electrical_microradians_second : 8|32@1- (1,0) [-2147483648|2147483647] "urad/s" Vector__XXX
+
+BO_ 1808 RTDExit: 1 FlightController
+ SG_ errno : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1809 DebugIMON: 8 FlightController
+ SG_ current_core_m_a : 0|16@1- (1,0) [-32768|32767] "mA" Vector__XXX
+ SG_ current_telem_m_a : 16|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ current_5v_m_a : 32|16@1- (1,0) [-32768|32767] "mA" Vector__XXX
+ SG_ current_3v3_m_a : 48|16@1- (1,0) [-32768|32767] "" Vector__XXX
+
+BO_ 1810 FCDynamicTorqueStatus: 8 FlightController
+ SG_ max_config_fwd : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ set_limit_fwd : 16|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ max_config_regen : 32|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ set_limit_regen : 48|16@1- (1,0) [-32768|32767] "" Vector__XXX
+
+BO_ 1811 IOBoardLoopStatus: 4 Vector__XXX
+ SG_ isense_raw : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ vsense_raw : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
+
+BO_ 1812 SteeringWheelButtons: 1 Vector__XXX
+ SG_ button_states : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1813 SetSteeringWheelIndicator: 3 Vector__XXX
+ SG_ indicator : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ state : 8|8@1+ (1,0) [0|255] "" Vector__XXXx
+ SG_ color : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1814 SetSteeringWheelBar: 2 Vector__XXX
+ SG_ value : 0|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ color : 8|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1815 DebugIMON_Raw: 8 Vector__XXX
+ SG_ current_core_counts : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ current_telem_counts : 16|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ current_5v_counts : 32|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ current_3v3_counts : 48|16@1- (1,0) [-32768|32767] "" Vector__XXX
+
+BO_ 1920 Debug: 8 Vector__XXX
+ SG_ device : 0|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ command : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ data : 32|32@1+ (1,0) [0|4294967295] "" Vector__XXX
+
+BO_ 1 AMSHeartBeat: 0 AMSBoard
+ /* AMSHeartBeat is defined on both GLV and AMS buses for different communication purposes */
+
+BO_ 420508017 InverterHC1Demands: 8 InverterBoard
+ SG_ torque_request : 0|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+ SG_ control_word : 16|16@1+ (1,0) [0|65535] "" Vector__XXX
+ SG_ torque_limit : 32|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+ SG_ checksum : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_counter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 420573553 InverterHC2Demands: 8 InverterBoard
+ SG_ torque_regen_limit : 0|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+ SG_ speed_limit_forward_rpm : 16|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
+ SG_ speed_limit_reverse_rpm : 32|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
+ SG_ checksum : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_counter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 420639089 InverterHC3BatteryDemands: 8 InverterBoard
+ SG_ max_discharge_i : 0|16@1- (0.1,0) [-3276.8|3276.7] "A" Vector__XXX
+ SG_ max_regen_i : 16|16@1- (0.1,0) [-3276.8|3276.7] "A" Vector__XXX
+ SG_ dc_voltage_link : 32|16@1- (1,0) [-32768|32767] "V" Vector__XXX
+ SG_ checksum : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_counter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 421068657 InverterHS1TorqueFeedback: 8 InverterBoard
+ SG_ torque_measured : 0|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+ SG_ speed_measured : 16|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
+ SG_ dc_link_current : 32|16@1- (0.1,0) [-3276.8|3276.7] "A" Vector__XXX
+ SG_ checksum : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_counter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 421199729 InverterHS3TemperatureFeedback: 8 InverterBoard
+ SG_ temp_remaining : 0|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ motor_temp : 16|16@1- (1,0) [-32768|32767] "degC" Vector__XXX
+ SG_ dc_link_voltage : 32|16@1- (1,0) [-32768|32767] "V" Vector__XXX
+ SG_ checksum : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_counter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 421134193 InverterHS2StatusFeedback: 8 InverterBoard
+ SG_ torque_available_forward : 0|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+ SG_ torque_available_reverse : 16|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+ SG_ inverter_status : 32|8@1+ (1,0) [0|255] "enum" Vector__XXX
+ SG_ torque_limit_code : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_status : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ cs_status : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 421265265 InverterHS4FaultInfo: 7 InverterBoard
+ SG_ fault_code : 0|16@1- (1,0) [-32768|32767] "" Vector__XXX
+ SG_ fault_data_0 : 16|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ fault_data_1 : 24|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ fault_data_2 : 32|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ seq_fault : 40|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ cs_fault : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 421330801 InverterHS5EncoderInfo: 4 InverterBoard
+ SG_ encoder_pos : 0|32@1- (1.52587890625e-05,0) [-32768|32767.9999847] "rotations" Vector__XXX
+
+BO_ 422117233 InverterHD1DebugCurrents: 8 InverterBoard
+ SG_ debug_id_act : 0|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+ SG_ debug_iq_act : 16|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+ SG_ debug_id_ref : 32|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+ SG_ debug_iq_ref : 48|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+
+BO_ 422182769 InverterHD2DebugVoltages: 8 InverterBoard
+ SG_ debug_ud : 0|16@1- (0.0625,0) [-2048|2047.9375] "V" Vector__XXX
+ SG_ debug_uq : 16|16@1- (0.0625,0) [-2048|2047.9375] "V" Vector__XXX
+ SG_ debug_mod_index : 32|16@1+ (0.0030517578125,0) [0|199.996948242] "%" Vector__XXX
+ SG_ debug_torque_control : 48|16@1- (0.0625,0) [-2048|2047.9375] "Nm" Vector__XXX
+
+BO_ 422248305 InverterHD3DebugTemperaturesA: 8 InverterBoard
+ SG_ debugTempsJunction0 : 0|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsJunction1 : 8|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsJunction2 : 16|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsJunction3 : 24|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsJunction4 : 32|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsJunction5 : 40|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsMotorMeasured : 48|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsMotorEstimate : 56|8@1+ (1,0) [0|255] "degC" Vector__XXX
+
+BO_ 422313841 InverterHD4DebugTemperaturesB: 8 InverterBoard
+ SG_ debugTempsCapEstimateFast : 0|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsTrack : 8|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsCapEstimateSlow : 16|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsHeatsink : 24|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsDeltaTj : 32|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsNormalised : 40|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsCoolant : 48|8@1+ (1,0) [0|255] "degC" Vector__XXX
+ SG_ debugTempsWinding : 56|8@1+ (1,0) [0|255] "degC" Vector__XXX
+
+BO_ 422379377 InverterHD5DebugControlDataPMAC: 8 InverterBoard
+ SG_ debugMaxFlux : 0|16@1- (1,0) [-32768|32767] "A" Vector__XXX
+ SG_ debugIvLim : 16|16@1- (1,0) [-32768|32767] "A" Vector__XXX
+ SG_ debugIqMax : 32|16@1- (1,0) [-32768|32767] "A" Vector__XXX
+ SG_ debugLs : 48|16@1- (0.953674316,0) [-31250|31250] "uH" Vector__XXX
+
+BO_ 422444913 InverterHD6DebugControlDataFV: 8 InverterBoard
+ SG_ debugSlip : 0|16@1- (0.0625,0) [-2048|2047.9375] "rad/s" Vector__XXX
+ SG_ debugLmSat : 16|16@1- (1.52587890625E-005,0) [-0.5|0.5] "H" Vector__XXX
+ SG_ debugIqMax : 32|16@1- (1,0) [-32768|32767] "A" Vector__XXX
+ SG_ debugRecipFlux : 48|16@1- (1,0) [-32768|32767] "1/A" Vector__XXX
+
+BO_ 420704625 InverterHC4DebugDemands: 8 InverterBoard
+ SG_ iqDirectControl : 0|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+ SG_ idDirectControl : 16|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+ SG_ seqDirectCurrents : 48|8@1+ (1,0) [0|255] "" Vector__XXX
+ SG_ csDirectCurrents : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1545 GPS_LAT: 4 RaspberryPi
+ SG_ latitude : 0|32@1- (1e-07,0) [-214.7483648|214.7483647] "deg" Vector__XXX
+
+BO_ 1546 GPS_LONG: 4 RaspberryPi
+ SG_ longitude : 0|32@1- (1e-07,0) [-214.7483648|214.7483647] "deg" Vector__XXX
+
+BO_ 1536 IMU_YAW: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "rad" Vector__XXX
+
+BO_ 1537 IMU_PITCH: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "rad" Vector__XXX
+
+BO_ 1538 IMU_ROLL: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "rad" Vector__XXX
+
+BO_ 1539 IMU_X: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "m/s^2" Vector__XXX
+
+BO_ 1540 IMU_Y: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "m/s^2" Vector__XXX
+
+BO_ 1541 IMU_Z: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "m/s^2" Vector__XXX
+
+BO_ 1542 MAG_X: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "rad/s" Vector__XXX
+
+BO_ 1543 MAG_Y: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "rad/s" Vector__XXX
+
+BO_ 1544 MAG_Z: 4 RaspberryPi
+ SG_ imu : 0|32@1- (1e-06,0) [-2147.483648|2147.483647] "rad/s" Vector__XXX
+
+CM_ BO_ 0 "Primary vehicle heartbeat sent at 50Hz by flight controller";
+CM_ BO_ 2 "AMS system status and fault reporting";
+CM_ BO_ 8 "Request device reboot with key 0xAC5Cadde";
+CM_ BO_ 10 "Request inverter physical reboot with key 0xedfe5ACC";
+CM_ BO_ 11 "Clear inverter faults with key 0xCF";
+CM_ BO_ 514 "Configure inverter torque and current limits";
+CM_ BO_ 515 "Enable/disable cell balancing with voltage threshold";
+CM_ BO_ 516 "Runtime panic message from any device";
+CM_ BO_ 517 "Runtime warning message from any device";
+CM_ BO_ 518 "Initialization panic message from any device";
+CM_ BO_ 768 "Throttle position from pedal board at 200Hz";
+CM_ BO_ 769 "Brake pressure from dual sensors at 200Hz";
+CM_ BO_ 770 "Cooling pump PWM duty cycle";
+CM_ BO_ 1025 "Battery pack voltage distribution and current";
+CM_ BO_ 1026 "Battery pack temperature statistics";
+CM_ BO_ 1027 "Individual segment heartbeat forwarded from AMS";
+CM_ BO_ 1028 "Ready-to-drive request (enter/exit)";
+CM_ BO_ 1795 "Temperature data response from segment board";
+CM_ BO_ 1796 "Voltage data response from segment board";
+CM_ BO_ 1799 "Detailed pedal sensor information";
+CM_ BO_ 1800 "Pedal sensor ADC counts and zero calibration";
+CM_ BO_ 1801 "Raw brake sensor ADC counts and calibration";
+CM_ BO_ 1804 "Suspension travel sensor data";
+CM_ BO_ 1805 "Wheel speed in electrical microradians/second";
+CM_ BO_ 2424899953 "Inverter torque demand from flight controller";
+CM_ BO_ 2424965489 "Inverter speed and regen limits";
+CM_ BO_ 2425031025 "Battery current limits for inverter";
+CM_ BO_ 2425685873 "Measured torque and speed from inverter";
+CM_ BO_ 2425816945 "Temperature feedback from inverter";
+CM_ BO_ 425983857 "Inverter status and available torque feedback";
+CM_ BO_ 426115953 "Inverter fault information";
+CM_ BO_ 426181489 "Inverter encoder position feedback";
+CM_ BO_ 426967921 "Inverter debug currents (d/q axis actual and reference)";
+CM_ BO_ 427033457 "Inverter debug voltages and modulation index";
+CM_ BO_ 427098993 "Inverter debug junction and motor temperatures";
+CM_ BO_ 427164529 "Inverter debug capacitor, heatsink, and coolant temperatures";
+CM_ BO_ 427230065 "Inverter debug control data for PMAC motors";
+CM_ BO_ 427295601 "Inverter debug control data for field vector";
+CM_ BO_ 425099633 "Inverter debug direct current control demands";
+CM_ BO_ 1545 "GPS latitude from Raspberry Pi";
+CM_ BO_ 1546 "GPS longitude from Raspberry Pi";
+CM_ BO_ 1536 "IMU yaw angle";
+CM_ BO_ 1537 "IMU pitch angle";
+CM_ BO_ 1538 "IMU roll angle";
+CM_ BO_ 1539 "IMU acceleration X-axis";
+CM_ BO_ 1540 "IMU acceleration Y-axis";
+CM_ BO_ 1541 "IMU acceleration Z-axis";
+CM_ BO_ 1542 "IMU angular velocity X-axis";
+CM_ BO_ 1543 "IMU angular velocity Y-axis";
+CM_ BO_ 1544 "IMU angular velocity Z-axis";
+
+CM_ SG_ 0 status "0=OK, 1=NOT_OK, 2=DRIVER_DECEASED, 3=ON_FIRE";
+CM_ SG_ 0 rtd_status "1 = Ready to drive active";
+CM_ SG_ 2 status "0=OK, 1=NOT_OK, 2=OVERVOLTAGE, 3=UNDERVOLTAGE, 4=OVERTEMP, 5=BLANKING";
+CM_ SG_ 2 faults "Bit 0: IMD_FAULT, Bit 1: AMS_FAULT, Bit 2: CAN_FAULT";
+CM_ SG_ 768 flags "Throttle state: 0=INIT, 1=ZERO, 2=OUTPUT, 3+=FAULT";
+CM_ SG_ 1025 current "Current in 10mA increments (multiply by 0.01)";
+CM_ SG_ 1804 sus_id "0=FL, 1=FR, 2=BL, 3=BR";
+
+BA_DEF_ "BusType" STRING ;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 100000000000;
+BA_DEF_ BO_  "EV_FLOAT32" INT 0 1;
+BA_DEF_ BO_  "EV_FLOAT64" INT 0 1;
+
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "EV_FLOAT32" 0;
+BA_DEF_DEF_  "EV_FLOAT64" 0;
+
+BA_ "GenMsgCycleTime" BO_ 0 20;
+BA_ "GenMsgCycleTime" BO_ 2 100;
+BA_ "GenMsgCycleTime" BO_ 768 5;
+BA_ "GenMsgCycleTime" BO_ 769 5;
+BA_ "GenMsgCycleTime" BO_ 1799 5;
+BA_ "GenMsgCycleTime" BO_ 1800 5;
+BA_ "GenMsgCycleTime" BO_ 2424899953 10;
+BA_ "GenMsgCycleTime" BO_ 2424965489 10;
+BA_ "GenMsgCycleTime" BO_ 2425031025 10;
+BA_ "GenMsgCycleTime" BO_ 2425685873 10;
+BA_ "GenMsgCycleTime" BO_ 2425816945 100;
+BA_ "GenMsgCycleTime" BO_ 1536 20;
+BA_ "GenMsgCycleTime" BO_ 1537 20;
+BA_ "GenMsgCycleTime" BO_ 1538 20;
+BA_ "GenMsgCycleTime" BO_ 1539 20;
+BA_ "GenMsgCycleTime" BO_ 1540 20;
+BA_ "GenMsgCycleTime" BO_ 1541 20;
+BA_ "GenMsgCycleTime" BO_ 1542 20;
+BA_ "GenMsgCycleTime" BO_ 1543 20;
+BA_ "GenMsgCycleTime" BO_ 1544 20;
+VAL_ 0 status 0 "OK" 1 "NOT_OK" 2 "DRIVER_DECEASED" 3 "ON_FIRE" ;
+VAL_ 2 status 0 "AMS_OK" 1 "AMS_NOT_OK" 2 "OVERVOLTAGE" 3 "UNDERVOLTAGE" 4 "OVERTEMP" 5 "AMS_BLANKING" ;
+VAL_ 1804 sus_id 0 "SUS_FL" 1 "SUS_FR" 2 "SUS_BL" 3 "SUS_BR" ;
+VAL_ 425983857 InverterStatus 14 "ACTIVE_SHORT" 13 "FAULT_OFF" 11 "FAULT_ACTIVE" 8 "ENABLED" 7 "ENERGISED" 4 "PRECHARGE" 2 "SHUTDOWN" 1 "NOT_READY" ;
+VAL_ 425983857 Torque_Limit_Code 9 "SPEED_LIMIT" 8 "DC_CURRENT_CUTBACK" 7 "DC_VOLTAGE_CUTBACK" 6 "BRIDGE_NOT_ENABLED" 5 "3D_LOOKUP" 4 "H_PROTOCOL" 3 "THERMAL" 2 "MTR_PWR_LIMIT_MAP" 1 "MAX_PWR" 0 "NO_LIMIT" ;
+VAL_ 2424899953 controlWord 10 "ACTIVE_SHORT" 9 "FAULT_RESET" 6 "SHUTDOWN" 5 "ENABLE" 3 "ENERGISE" 0 "NO_COMMAND" ;

@@ -1,4 +1,4 @@
-import { CHUNK_SIZE } from './config.js';
+import { CHUNK_SIZE, PRELOAD_BYTES } from './config.js?v=20260504-history-dbc4';
 import { parseCandumpText } from './candump.js';
 import { createDecodeState, decodeFrame } from './signals.js';
 
@@ -21,6 +21,7 @@ export class ReplayEngine extends EventTarget {
     this.bytesFetched = 0;
     this.remote = null;
     this.loading = false;
+    this.historySeconds = 20;
   }
 
   loadSample(name, text) {
@@ -65,6 +66,7 @@ export class ReplayEngine extends EventTarget {
       await rangeFile.head();
       await this.fetchNextChunk();
       await this.estimateTimelineEnd();
+      await this.preloadRemote();
       this.bytesFetched = rangeFile.bytesFetched;
       this.playheadTime = this.frames[0]?.timestamp ?? null;
       this.timelineStart = this.frames[0]?.timestamp ?? null;
@@ -112,6 +114,15 @@ export class ReplayEngine extends EventTarget {
     return this.remote.fetching;
   }
 
+  async preloadRemote() {
+    if (!this.remote || this.remote.done) return;
+    const size = this.source.rangeFile.size || 0;
+    const preloadLimit = size ? Math.min(size, PRELOAD_BYTES) : PRELOAD_BYTES;
+    while (!this.remote.done && this.remote.nextOffset < preloadLimit) {
+      await this.fetchNextChunk();
+    }
+  }
+
   async estimateTimelineEnd() {
     if (!this.remote || this.remote.done) return;
     const { rangeFile } = this.source;
@@ -148,6 +159,11 @@ export class ReplayEngine extends EventTarget {
     this.anchorClock();
   }
 
+  setHistorySeconds(seconds) {
+    if (!Number.isFinite(seconds)) return;
+    this.historySeconds = Math.max(1, seconds);
+  }
+
   play() {
     if (!this.frames.length || this.playing || this.loading) return;
     this.playing = true;
@@ -179,8 +195,8 @@ export class ReplayEngine extends EventTarget {
     const index = findFrameIndexAtOrAfter(this.frames, target);
     this.frameIndex = index;
     this.playheadTime = target;
-    this.decodeState = createDecodeState();
     this.store.reset();
+    this.decodeState = this.populateHistory(index, target - this.historySeconds);
     this.anchorClock();
     if (target > (this.frames[this.frames.length - 1]?.timestamp ?? target) && this.remote && !this.remote.done) {
       void this.fetchNextChunk();
@@ -226,6 +242,35 @@ export class ReplayEngine extends EventTarget {
       this.store.append(signal, time, value);
     }
     this.frameIndex += 1;
+  }
+
+  createDecodeStateAt(index) {
+    const state = createDecodeState();
+    const target = this.frames[index]?.timestamp;
+    if (!Number.isFinite(target)) return state;
+    let seed = index - 1;
+    while (seed >= 0 && target - this.frames[seed].timestamp <= 1) seed -= 1;
+    for (let i = seed + 1; i < index; i++) {
+      state.countWindow.push(this.frames[i].timestamp);
+    }
+    return state;
+  }
+
+  populateHistory(index, historyStart) {
+    const state = createDecodeState();
+    let start = index;
+    while (start > 0 && this.frames[start - 1].timestamp >= historyStart) start -= 1;
+    let seed = start - 1;
+    const seedTarget = this.frames[start]?.timestamp;
+    while (seed >= 0 && seedTarget - this.frames[seed].timestamp <= 1) seed -= 1;
+    for (let i = seed + 1; i < start; i++) state.countWindow.push(this.frames[i].timestamp);
+    for (let i = start; i < index; i++) {
+      const frame = this.frames[i];
+      for (const [signal, time, value] of decodeFrame(frame, state)) {
+        this.store.append(signal, time, value);
+      }
+    }
+    return state;
   }
 
   progress() {

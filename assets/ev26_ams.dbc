@@ -1,0 +1,127 @@
+VERSION ""
+
+/* 
+ * EV26 AMS Bus DBC
+ * 
+ * This file defines CAN messages for the AMS (Accumulator Management System) bus.
+ * The AMS bus is a separate physical CAN bus dedicated to communication between
+ * the AMS board and segment boards for high-frequency battery monitoring.
+ * 
+ * CAN ID Encoding:
+ * AMS messages use a special encoding: <3 bit namespace><4 bit segment ID><4 bit array index>
+ * 
+ * Namespaces:
+ *   0x6xx = VOLTAGE_DATA (0b110)
+ *   0x5xx = TEMP_DATA_ONE (0b101)
+ *   0x4xx = TEMP_DATA_TWO (0b100)
+ *   0x3xx = OTHER (segment heartbeats) (0b011)
+ *   0x2xx = COMMANDS (AMS to segments) (0b010)
+ *   0x001 = AMS_HEARTBEAT (0b000)
+ */
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_SGTYPE_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: AMSBoard SegmentBoard
+
+BO_ 1 AMSHeartBeat: 0 AMSBoard
+
+BO_ 513 SegmentConfig: 4 AMSBoard
+ SG_ upperVoltageCutoff : 0|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+ SG_ lowerVoltageCutoff : 16|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+
+BO_ 769 SegmentHeartbeat: 5 SegmentBoard
+ SG_ voltage_mv : 0|16@1+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ happy : 16|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ segmentID : 17|8@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ shouldFault : 25|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ isBalancing : 26|1@1+ (1,0) [0|1] "" Vector__XXX
+
+BO_ 770 SegmentHeartbeatTwo: 2 SegmentBoard
+ SG_ segmentID : 0|8@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ die_temp : 8|8@1+ (1,0) [0|255] "degC" Vector__XXX
+
+BO_ 514 RequestForVoltages: 1 AMSBoard
+ SG_ segmentID : 0|8@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1536 VoltageData: 4 SegmentBoard
+ SG_ voltage0 : 0|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+ SG_ voltage1 : 16|16@1+ (0.0001,0) [0|6.5535] "V" Vector__XXX
+
+BO_ 515 RequestForTempData: 1 AMSBoard
+ SG_ segmentID : 0|8@1+ (1,0) [0|15] "" Vector__XXX
+
+BO_ 1280 TempDataOne: 4 SegmentBoard
+ SG_ temp0 : 0|16@1- (0.01,0) [-327.68|327.67] "degC" Vector__XXX
+ SG_ temp1 : 16|16@1- (0.01,0) [-327.68|327.67] "degC" Vector__XXX
+
+BO_ 1024 TempDataTwo: 4 SegmentBoard
+ SG_ temp0 : 0|16@1- (0.01,0) [-327.68|327.67] "degC" Vector__XXX
+ SG_ temp1 : 16|16@1- (0.01,0) [-327.68|327.67] "degC" Vector__XXX
+
+BO_ 516 Balance: 2 AMSBoard
+ SG_ voltage : 0|16@1+ (0.001,0) [0|65.535] "V" Vector__XXX
+
+
+
+CM_ BO_ 1 "AMS heartbeat signal to segment boards";
+CM_ BO_ 513 "Configure segment voltage cutoffs (0x201)";
+CM_ BO_ 769 "Segment status heartbeat (0x301)";
+CM_ BO_ 770 "Segment die temperature heartbeat (0x302)";
+CM_ BO_ 514 "Request voltage readings from segment (0x202)";
+CM_ BO_ 1536 "Voltage data response from segment (0x600)";
+CM_ BO_ 515 "Request temperature data from segment (0x203)";
+CM_ BO_ 1280 "Temperature data one response from segment (0x500)";
+CM_ BO_ 1024 "Temperature data two response from segment (0x400)";
+CM_ BO_ 516 "Balance command with target voltage (0x204)";
+
+CM_ SG_ 513 upperVoltageCutoff "Upper voltage cutoff in 100µV units (typically 4.2V)";
+CM_ SG_ 513 lowerVoltageCutoff "Lower voltage cutoff in 100µV units (typically 2.5V)";
+CM_ SG_ 769 voltage_mv "Segment voltage at last zero crossing or current reading";
+CM_ SG_ 769 happy "Human-facing status indicator";
+CM_ SG_ 769 shouldFault "True if car should immediately fault";
+CM_ SG_ 769 isBalancing "True if segment is actively balancing";
+CM_ SG_ 1536 voltage0 "Cell voltage (n*2) in 100µV units";
+CM_ SG_ 1536 voltage1 "Cell voltage (n*2+1) in 100µV units";
+CM_ SG_ 1280 temp0 "Temperature reading 0";
+CM_ SG_ 1280 temp1 "Temperature reading 1";
+CM_ SG_ 1024 temp0 "Temperature reading for thermistor 17";
+CM_ SG_ 1024 temp1 "Temperature reading for thermistor 18";
+
+BA_DEF_ "BusType" STRING ;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 100000000000;
+
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "GenSigStartValue" 0;
+
+BA_ "GenMsgCycleTime" BO_ 1 100;
+BA_ "GenMsgCycleTime" BO_ 769 50;
+BA_ "GenMsgCycleTime" BO_ 770 50;

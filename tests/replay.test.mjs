@@ -26,7 +26,7 @@ replay.frames = [
 replay.consumeFrame();
 assert.equal(store.length('pedal.throttle'), 1);
 replay.seek(0.5);
-assert.equal(store.length('pedal.throttle'), 0);
+assert.ok(store.length('pedal.throttle') >= 1);
 assert.equal(replay.frameIndex, 1);
 
 replay.timelineStart = 1;
@@ -36,16 +36,33 @@ assert.equal(replay.playheadTime, 51);
 assert.equal(replay.progress().start, 1);
 assert.equal(replay.progress().end, 101);
 
+const rateStore = new SeriesStore();
+const rateReplay = new ReplayEngine(rateStore);
+rateReplay.frames = Array.from({ length: 20 }, (_, i) => ({
+  timestamp: i * 0.1,
+  canId: 0x300,
+  data: new Uint8Array([i, 0, 0, 0]),
+}));
+rateReplay.timelineStart = 0;
+rateReplay.timelineEnd = 1.9;
+rateReplay.seek(0.5);
+rateReplay.consumeFrame();
+const rateValues = rateStore.view('can.rate').values;
+assert.ok(rateValues[rateValues.length - 1] > 1);
+assert.ok(rateStore.length('can.rate') > 1);
+
 const remoteStore = new SeriesStore();
 const remoteReplay = new ReplayEngine(remoteStore);
 const fakeRange = {
   size: 1_000_000,
   bytesFetched: 0,
+  fetchCalls: 0,
   lastStatus: null,
   async head() {
     return { size: this.size, acceptRanges: true };
   },
   async fetchTextRange(start) {
+    this.fetchCalls += 1;
     this.lastStatus = 206;
     const text = start === 0
       ? '(10.000000) can0 300#0100000000\n(10.100000) can0 300#0200000000\n'
@@ -58,5 +75,6 @@ await remoteReplay.loadRemote({ name: 'remote.log' }, fakeRange);
 assert.equal(remoteReplay.progress().start, 10);
 assert.equal(remoteReplay.progress().end, 110);
 assert.equal(remoteReplay.frameIndex, 0);
+assert.ok(fakeRange.fetchCalls > 2);
 
 console.log('replay seek ok');

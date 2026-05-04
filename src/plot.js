@@ -1,5 +1,5 @@
 import uPlot from '../vendor/uplot/uPlot.esm.js';
-import { SIGNAL_BY_ID } from './signals.js';
+import { SIGNAL_BY_ID, SIGNAL_ORDER } from './signals.js?v=20260504-history-dbc4';
 import { formatClock } from './dom.js';
 
 const MIN_WINDOW_SECONDS = 1;
@@ -111,7 +111,7 @@ export class PlotCanvas {
 
   draw() {
     this.dirty = false;
-    const ids = [...this.selected];
+    const ids = this.orderedSelected();
     const { width, height } = this.size();
     if (!ids.length || width <= 0 || height <= 0) {
       this.destroyChart();
@@ -134,9 +134,8 @@ export class PlotCanvas {
     }
 
     this.ensureChart(ids, width, height);
-    this.uplot.setData(data, false);
+    this.uplot.setData(this.normalizeData(ids, data), false);
     this.uplot.setScale('x', { min: range.minT, max: range.maxT });
-    this.applyValueScales(ids, data);
     this.readout.textContent = `${formatClock(range.maxT - range.minT)} history`;
   }
 
@@ -162,17 +161,20 @@ export class PlotCanvas {
   }
 
   options(ids, width, height) {
-    const scales = { x: { time: false } };
+    const scales = {
+      x: { time: false },
+      y: { auto: false, min: 0, max: 1 },
+    };
     const series = [
       {},
       ...ids.map((id) => {
         const signal = SIGNAL_BY_ID[id];
-        scales[id] = { auto: false };
         return {
           label: signal?.label || id,
-          scale: id,
+          scale: 'y',
           stroke: signal?.color || '#ffffff',
           width: 1.6,
+          spanGaps: true,
           points: { show: false },
         };
       }),
@@ -192,6 +194,7 @@ export class PlotCanvas {
           ticks: { stroke: '#313a49', width: 1 },
           values: (_u, vals) => vals.map((v) => formatClock(v - (_u.scales.x.min ?? v))),
         },
+        { scale: 'y', show: false, grid: { show: false } },
       ],
       cursor: {
         drag: { x: false, y: false },
@@ -268,7 +271,13 @@ export class PlotCanvas {
     });
   }
 
-  applyValueScales(ids, data) {
+  normalizeData(ids, data) {
+    const out = [data[0], ...ids.map(() => [])];
+    const laneGap = ids.length > 1 ? 0.025 : 0.08;
+    const laneHeight = ids.length > 1
+      ? (1 - laneGap * (ids.length + 1)) / ids.length
+      : 1 - laneGap * 2;
+
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const values = data[i + 1];
@@ -291,8 +300,17 @@ export class PlotCanvas {
         ? { min: Math.min(previous.min, next.min), max: Math.max(previous.max, next.max) }
         : next;
       this.valueBounds.set(id, stable);
-      this.uplot.setScale(id, stable);
+
+      const laneBase = ids.length > 1
+        ? 1 - laneGap * (i + 1) - laneHeight * (i + 1)
+        : laneGap;
+      const denom = stable.max - stable.min || 1;
+      out[i + 1] = values.map((value) => {
+        if (!Number.isFinite(value)) return null;
+        return laneBase + ((value - stable.min) / denom) * laneHeight;
+      });
     }
+    return out;
   }
 
   size() {
@@ -307,6 +325,14 @@ export class PlotCanvas {
       width: Math.max(1, Math.floor(rect.width)),
       height: Math.max(1, Math.floor(Math.min(rawHeight, viewportHeight))),
     };
+  }
+
+  orderedSelected() {
+    return [...this.selected].sort((a, b) => {
+      const ai = SIGNAL_ORDER.get(a) ?? Number.MAX_SAFE_INTEGER;
+      const bi = SIGNAL_ORDER.get(b) ?? Number.MAX_SAFE_INTEGER;
+      return ai - bi || a.localeCompare(b);
+    });
   }
 }
 

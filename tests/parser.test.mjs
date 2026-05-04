@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { parseCandumpLine, parseCandumpText } from '../src/candump.js';
 import { createDecodeState, decodeFrame } from '../src/signals.js';
+import { DBC_SIGNALS } from '../src/dbc.js';
 import { SAMPLE_LOG } from '../src/config.js';
 
 const frame = parseCandumpLine('(1777484216.293542) can0 300#4A00000001');
@@ -14,6 +15,8 @@ assert.ok(frames.length > 10);
 
 const decoded = decodeFrame(frame, createDecodeState());
 assert.ok(decoded.some(([id, , value]) => id === 'pedal.throttle' && value === 74));
+assert.ok(DBC_SIGNALS.some((signal) => signal.id === 'dbc.ev26.throttle.throttle'));
+assert.ok(decoded.some(([id, , value]) => id === 'dbc.ev26.throttle.throttle' && value === 74));
 
 const wheel = parseCandumpLine('(1777484216.295077) can0 70D#019ECFFFFF');
 const wheelDecoded = decodeFrame(wheel, createDecodeState());
